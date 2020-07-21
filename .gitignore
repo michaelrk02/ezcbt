@@ -1,0 +1,5 @@
+application/cache/
+application/logs/
+extern/
+presets/production/
+

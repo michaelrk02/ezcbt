@@ -1,0 +1,10 @@
+#!/bin/bash
+
+wd=$(pwd)
+
+# install react-ci-rpc
+echo 'installing react-ci-rpc...'
+cd extern
+cd react-ci-rpc
+./install ${wd}
+

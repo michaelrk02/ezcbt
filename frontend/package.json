@@ -1,0 +1,27 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "description": "Frontend application for ezCBT",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "@babel/core": "*",
+    "@babel/preset-env": "*",
+    "babel-loader": "*",
+    "core-js": "*",
+    "css-loader": "*",
+    "file-loader": "*",
+    "react": "*",
+    "react-dom": "*",
+    "react-router-dom": "*",
+    "sass-loader": "*",
+    "spectre.css": "*",
+    "style-loader": "*"
+  },
+  "scripts": {
+    "build": "webpack"
+  },
+  "keywords": [],
+  "author": "Michael R. Krisnadhi",
+  "license": "BSD 3-Clause"
+}

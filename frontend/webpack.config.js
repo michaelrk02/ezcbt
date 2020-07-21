@@ -1,0 +1,40 @@
+const path = require('path');
+
+module.exports = {
+    optimization: {
+        splitChunks: {
+            chunks: 'all',
+            automaticNameDelimiter: '-'
+        }
+    },
+    entry: {
+        theme: './theme.js',
+        user: './user.js',
+        admin: './admin.js'
+    },
+    output: {
+        filename: '[name].app.js',
+        path: path.resolve(__dirname, '../public/')
+    },
+    mode: 'development', // TODO
+    devtool: 'inline-source-map', // TODO
+    module: {
+        rules: [
+            {
+                test: /\.js$/,
+                use: {
+                    loader: 'babel-loader',
+                    options: {
+                        presets: ['@babel/preset-env'],
+                        cacheDirectory: true
+                    }
+                }
+            },
+            {
+                test: /\.s[ac]ss$/,
+                exclude: /node_modules/,
+                use: ['style-loader', 'css-loader', 'sass-loader']
+            }
+        ]
+    }
+};
