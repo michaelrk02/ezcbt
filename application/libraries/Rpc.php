@@ -24,9 +24,14 @@ class Rpc {
     }
 
     public function reply($object = NULL) {
+        $cookie = $this->cookie;
+        if (count($cookie) == 0) {
+            $cookie = new \stdClass;
+        }
+
         $this->CI->output->set_status_header(200);
         $this->CI->output->set_content_type('application/json');
-        $this->CI->output->set_output(json_encode(['__value' => $object, '__cookie' => $this->cookie]));
+        $this->CI->output->set_output(json_encode(['__value' => $object, '__cookie' => $cookie]));
     }
 
     public function error($message = 'incorrect parameter', $code = 400) {

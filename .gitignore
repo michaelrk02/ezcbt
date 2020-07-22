@@ -1,5 +1,7 @@
 application/cache/
 application/logs/
 extern/
+frontend/node_modules/
 presets/production/
+public/*.app.js
 

@@ -60,13 +60,14 @@ export function call(address, args, callback) {
         res.value = xhr.response;
 
         if ((typeof(res.value) === 'object') && (res.value !== null)) {
+            setCookieObject(res.value.__cookie);
             res.value = res.value.__value;
-            setCookieObject(JSON.parse(res.value.__cookie));
         }
 
         if (typeof(callback) === 'function') {
             callback(res);
         }
     });
+    xhr.send(JSON.stringify(args));
 }
 

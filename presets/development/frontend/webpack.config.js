@@ -8,8 +8,8 @@ module.exports = {
         }
     },
     entry: {
-        theme: './theme.js',
-        portal: './portal.js',
+        styles: './styles.js',
+        user: './user.js',
         admin: './admin.js'
     },
     output: {

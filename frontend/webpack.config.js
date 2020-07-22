@@ -8,7 +8,7 @@ module.exports = {
         }
     },
     entry: {
-        theme: './theme.js',
+        styles: './styles.js',
         user: './user.js',
         admin: './admin.js'
     },

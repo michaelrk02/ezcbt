@@ -1,0 +1,23 @@
+@import '~spectre.css/src/spectre';
+@import '~spectre.css/src/spectre-icons';
+@import '~spectre.css/src/spectre-exp';
+
+* {
+    word-break: break-word;
+}
+
+.off-canvas .off-canvas-content {
+    padding: 0;
+    width: 100%;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.app-content {
+    flex: 1 0 auto;
+}
+
