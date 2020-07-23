@@ -120,6 +120,38 @@ class User extends CI_Controller {
         }
     }
 
+    public function Finish() {
+        $user = $this->get_user('user_id,course_id,answer_data,state');
+        if ($user['state'] === 'started') {
+            $this->load->model('courses_model');
+
+            $course = $this->courses_model->get($user['course_id'], TRUE, 'num_questions,allow_empty');
+            if (isset($course)) {
+                $this->load->model('users_model');
+
+                for ($i = 0; $i < $course['num_questions']; $i++) {
+                    if (($user['answer_data'][$i] === '-') && ($course['allow_empty'] == 0)) {
+                        $this->rpc->error('masih terdapat beberapa soal yang belum dijawab', 403);
+                        return;
+                    }
+                }
+
+                $this->users_model->set($user['user_id'], ['state' => 'finished']);
+                $this->rpc->reply();
+            } else {
+                $this->rpc->error('tes tidak terdaftar', 404);
+            }
+        } else {
+            $this->rpc->error('anda tidak sedang mengerjakan tes ini');
+        }
+    }
+
+    public function GetAnswerData() {
+        $user = $this->get_user('answer_data');
+
+        $this->rpc->reply($user['answer_data']);
+    }
+
     public function Mark() {
         $this->load->model(['courses_model', 'users_model']);
 
@@ -132,7 +164,7 @@ class User extends CI_Controller {
             if (isset($course)) {
                 $question_id = $this->rpc->param('question_id');
                 $choice_id = $this->rpc->param('choice_id');
-                if (isset($question_id) && isset($answer_id) && ($question_id < $course['num_questions'])) {
+                if (isset($question_id) && isset($choice_id) && ($question_id < $course['num_questions'])) {
                     $question_id = max(0, $question_id);
                     if (is_numeric($choice_id)) {
                         $choice_id = max(min($choice_id, $course['num_choices'] - 1), 0);

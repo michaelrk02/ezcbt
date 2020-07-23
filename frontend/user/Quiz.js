@@ -13,7 +13,8 @@ export default class Quiz extends Component {
             course: null,
             coursePDFURL: null,
             secondsLeft: 0,
-            activeTab: 'questions'
+            activeTab: 'questions',
+            answerData: null
         };
 
         this.tabs = [
@@ -28,6 +29,9 @@ export default class Quiz extends Component {
         }
 
         this.timerID = null;
+
+        this.onMark = [];
+        this.onFinish = this.onFinish.bind(this);
     }
 
     fetchUserStatus() {
@@ -51,6 +55,21 @@ export default class Quiz extends Component {
         call(ezRPC('user/GetCourseDetails'), null, (res => {
             if (res.code == 200) {
                 this.setState({course: res.value});
+                const choices = ['-'];
+                for (let i = 0; i < res.value.num_choices; i++) {
+                    choices.push(i);
+                }
+                for (let i = 0; i < res.value.num_questions; i++) {
+                    this.onMark.push((e => {
+                        call(ezRPC('user/Mark'), {question_id: i, choice_id: e.target.value}, (res => {
+                            if (res.code == 200) {
+                                this.fetchAnswerData();
+                            } else {
+                                window.alert('Gagal menulis jawaban: ' + res.status + '. Mohon coba lagi');
+                            }
+                        }).bind(this));
+                    }).bind(this));
+                }
                 this.fetchCoursePDFURL();
             } else {
                 window.alert('Gagal mendapatkan detail tes: ' + res.status + '. Mohon coba lagi');
@@ -63,10 +82,21 @@ export default class Quiz extends Component {
             if (res.code == 200) {
                 this.setState({coursePDFURL: res.value});
                 this.initializeTimer();
+                this.fetchAnswerData();
             } else {
                 window.alert('Gagal mendapatkan URL PDF: ' + res.status + '. Mohon coba lagi');
             }
         }).bind(this));
+    }
+
+    fetchAnswerData() {
+        call(ezRPC('user/GetAnswerData'), null, (res => {
+            if (res.code == 200) {
+                this.setState({answerData: res.value});
+            } else {
+                window.alert('Gagal mendapatkan data jawaban: ' + res.status + '. Mohon coba lagi');
+            }
+        }).bind(this))
     }
 
     initializeTimer() {
@@ -87,6 +117,13 @@ export default class Quiz extends Component {
                 window.clearInterval(this.timerID);
             }
         }).bind(this), 1000);
+    }
+
+    getChoiceStr(choiceID) {
+        if (choiceID !== '-') {
+            return String.fromCharCode(0x41 + parseInt(choiceID));
+        }
+        return '(kosong)';
     }
 
     componentDidMount() {
@@ -119,11 +156,11 @@ export default class Quiz extends Component {
                             $('p', null, 'Waktu pengerjaan: ' + formatHMS(secondsToHMS(this.state.course.duration)))
                         ]),
                         $('iframe', {style: {display: this.state.activeTab === 'questions' ? 'block' : 'none'}, src: this.state.coursePDFURL, width: '100%', height: '90%%'}),
-                        $('div', {style: {display: this.state.activeTab === 'answers' ? 'block' : 'none'}}, 'boo!')
+                        $('div', {style: {display: this.state.activeTab === 'answers' ? 'block' : 'none'}}, this.renderAnswers())
                     ])
                 ]),
                 $('div', {className: 'panel-footer'}, [
-                    $('button', {className: 'btn btn-success btn-block'}, 'Selesai')
+                    $('button', {className: 'btn btn-success btn-block', onClick: this.onFinish}, 'Selesai')
                 ])
             ])
         ]);
@@ -146,8 +183,47 @@ export default class Quiz extends Component {
         return $('span', {style: {fontFamily: 'monospace'}, className: 'label label-rounded label-' + color}, str);
     }
 
+    renderAnswers() {
+        if (this.state.answerData === null) {
+            return $('div', null, 'Loading ...');
+        }
+
+        const elements = [];
+        for (let i = 0; i < this.state.course.num_questions; i++) {
+            const choiceID = this.state.answerData.charAt(i);
+
+            const options = [{id: '-', name: this.getChoiceStr('-')}];
+            for (let j = 0; j < this.state.course.num_choices; j++) {
+                options.push({id: j, name: this.getChoiceStr(j)});
+            }
+
+            elements.push($('div', {className: 'column col-6 col-sm-12'}, [
+                $('div', {className: 'columns', style: {margin: '0.2rem'}}, [
+                    $('div', {className: 'column col-3'}, (i + 1) + '. '),
+                    $('div', {className: 'column col-9 input-group'}, [
+                        $('span', {className: 'input-group-addon'}, 'Jawaban:'),
+                        $('select', {className: 'form-select', value: this.state.answerData.charAt(i), onChange: this.onMark[i]}, options.map(opt => $('option', {value: opt.id}, opt.name)))
+                    ])
+                ])
+            ]));
+        }
+        return $('div', {className: 'columns'}, elements);
+    }
+
     onAuthVerified() {
         this.fetchUserStatus();
+    }
+
+    onFinish() {
+        if (window.confirm('Apakah anda yakin?')) {
+            call(ezRPC('user/Finish'), null, (res => {
+                if (res.code == 200) {
+                    this.props.history.replace('/course');
+                } else {
+                    window.alert('Tidak dapat menyelesaikan tes: ' + res.status);
+                }
+            }).bind(this));
+        }
     }
 
 }
