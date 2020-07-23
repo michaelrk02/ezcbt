@@ -80,7 +80,7 @@ export default class Login extends Component {
                         ]),
                         $('div', {className: 'form-group'}, [
                             $('label', {className: 'form-label'}, 'User ID'),
-                            $('input', {type: this.state.userIDShown ? 'text' : 'password', className: 'form-input', placeholder: 'Masukkan user ID', onChange: this.onUserIDChange}),
+                            $('input', {type: this.state.userIDShown ? 'text' : 'password', className: 'form-input', style: {fontFamily: 'monospace'}, placeholder: 'Masukkan user ID', onChange: this.onUserIDChange}),
                             $('label', {className: 'form-checkbox'}, [
                                 $('input', {type: 'checkbox', checked: this.state.userIDShown, onChange: this.onUserIDShowToggle}),
                                 $('i', {className: 'form-icon'}),
@@ -116,6 +116,7 @@ export default class Login extends Component {
         call(ezRPC('user/Login'), {course_id: this.state.courseID, user_id: this.state.userID}, (res => {
             if (res.code == 200) {
                 window.alert('Login berhasil. Selamat datang, ' + res.value.name + '!');
+                window.header.current.setState({update: true});
                 this.props.history.replace(this.redirect);
             } else {
                 window.alert('Tidak dapat melakukan login: ' + res.status);

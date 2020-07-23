@@ -1,4 +1,4 @@
-import {Component, createElement as $} from 'react';
+import {Component, createElement as $, createRef} from 'react';
 import {BrowserRouter as Router, Route, Switch} from 'react-router-dom';
 
 import Header from './Header.js';
@@ -9,24 +9,19 @@ import Login from './Login.js';
 import Course from './Course.js';
 import Quiz from './Quiz.js';
 
-window.defaultAppSubtitle = 'CBT application';
-window.defaultAppIcon = null;
+window.header = createRef();
 
 export default class App extends Component {
 
     constructor(props) {
         super(props);
-        this.state = {
-            subtitle: window.defaultAppSubtitle,
-            icon: window.defaultAppIcon
-        };
     }
 
     render() {
         return $(Router, {basename: this.props.basename}, [
             $('div', {className: 'app-container'}, [
                 $('div', {className: 'app-content'}, [
-                    $(Header, {subtitle: this.state.subtitle, icon: this.state.icon}),
+                    $(Route, {path: '/', render: ({history}) => $(Header, {history: history, ref: window.header})}),
                     $(Switch, null, [
                         $(Route, {exact: true, path: '/', component: Landing}),
                         $(Route, {exact: true, path: '/login', component: Login}),
@@ -37,14 +32,6 @@ export default class App extends Component {
                 $(Footer)
             ])
         ]);
-    }
-
-    setSubtitle(subtitle, icon) {
-        this.setState({subtitle: subtitle, icon: icon});
-    }
-
-    resetSubtitle() {
-        this.setSubtitle(window.defaultAppSubtitle, window.defaultAppIcon);
     }
 
 }

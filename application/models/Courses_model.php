@@ -15,7 +15,12 @@ class Courses_model extends CI_Model {
             $this->db->where('course_id', $id);
             return $this->db->get()->row_array(0);
         }
-        return $this->db->get()->result_array();
+
+        $data = $this->db->get()->result_array();
+        if (!isset($data)) {
+            $data = [];
+        }
+        return $data;
     }
 
 }

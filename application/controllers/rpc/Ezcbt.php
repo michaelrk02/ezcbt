@@ -13,12 +13,7 @@ class Ezcbt extends CI_Controller {
 
         $incl_locked = $this->rpc->param('incl_locked');
 
-        $courses = $this->courses_model->get(NULL, !empty($incl_locked), 'course_id,title');
-        if (!isset($courses)) {
-            $courses = [];
-        }
-
-        $this->rpc->reply($courses);
+        $this->rpc->reply($this->courses_model->get(NULL, !empty($incl_locked), 'course_id,title'));
     }
 
 }
