@@ -86,4 +86,7 @@ defined('EXIT__AUTO_MAX')      OR define('EXIT__AUTO_MAX', 125); // highest auto
 
 // User definitions
 define('SERVER_SECRET', 'Tell the developer if you can crack this! >:('); // TODO
+define('ADMIN_PASSWORD', '$2y$05$xnTOHnAAYRBGgBdAfLYodejNS8iIjw60qxw8bdLwRS0DI0IhcBjeS'); // TODO. Translates to 'admin'
+define('COPYRIGHT_YEAR', floor(time() / 31557600) + date('Y', 0));
+define('COPYRIGHT_OWNER', 'Michael R. Krisnadhi');
 

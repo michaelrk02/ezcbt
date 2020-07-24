@@ -44,11 +44,11 @@ export default class Header extends Component {
                 null :
                 $('div', {className: 'column col-auto', style: {padding: '1rem', marginTop: 'auto', marginBottom: 'auto'}}, [
                     $('div', {className: 'dropdown dropdown-right'}, [
-                        $('button', {className: 'btn btn-lg btn-secondary s-circle dropdown-toggle'}, $('i', {className: 'icon icon-people'})),
+                        $('button', {type: 'button', className: 'btn btn-lg btn-secondary s-circle dropdown-toggle'}, $('i', {className: 'icon icon-people'})),
                         $('ul', {className: 'menu'}, [
                             $('li', {className: 'menu-item'}, $('b', null, this.state.userName)),
                             $('li', {className: 'divider', 'data-content': 'ACTIONS'}),
-                            $('li', {className: 'menu-item'}, $('button', {className: 'btn btn-link text-error', onClick: this.onLogout}, 'Logout'))
+                            $('li', {className: 'menu-item'}, $('button', {type: 'button', className: 'btn btn-link text-error', onClick: this.onLogout}, 'Logout'))
                         ])
                     ])
                 ])

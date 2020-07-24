@@ -14,7 +14,8 @@ export default class Quiz extends Component {
             coursePDFURL: null,
             secondsLeft: 0,
             activeTab: 'questions',
-            answerData: null
+            answerData: null,
+            syncing: false
         };
 
         this.tabs = [
@@ -102,9 +103,10 @@ export default class Quiz extends Component {
     initializeTimer() {
         this.timerID = window.setInterval((() => {
             if (this.state.secondsLeft % 30 == 0) {
+                this.setState({syncing: true});
                 call(ezRPC('user/GetStatus'), null, (res => {
                     if (res.code == 200) {
-                        this.setState({secondsLeft: res.value.seconds_left});
+                        this.setState({syncing: false, secondsLeft: res.value.seconds_left});
                     }
                 }).bind(this));
             }
@@ -160,27 +162,33 @@ export default class Quiz extends Component {
                     ])
                 ]),
                 $('div', {className: 'panel-footer'}, [
-                    $('button', {className: 'btn btn-success btn-block', onClick: this.onFinish}, 'Selesai')
+                    $('button', {type: 'button', className: 'btn btn-success btn-block', onClick: this.onFinish}, 'Selesai')
                 ])
             ])
         ]);
     }
 
     renderTimer() {
-        const hms = secondsToHMS(this.state.secondsLeft);
-        let color = 'success';
-        if ((60 <= this.state.secondsLeft) && (this.state.secondsLeft < 900)) {
-            color = 'warning';
-        } else if (this.state.secondsLeft < 60) {
-            color = 'error';
+        let color = '';
+        let str = null;
+        if (this.state.syncing) {
+            str = 'syncing ...';
+        } else {
+            color = ' label-success';
+            const hms = secondsToHMS(this.state.secondsLeft);
+            if ((60 <= this.state.secondsLeft) && (this.state.secondsLeft < 900)) {
+                color = ' label-warning';
+            } else if (this.state.secondsLeft < 60) {
+                color = ' label-error';
+            }
+
+            hms.hours = hms.hours.toString().padStart(2, '0');
+            hms.minutes = hms.minutes.toString().padStart(2, '0');
+            hms.seconds = hms.seconds.toString().padStart(2, '0');
+            str = hms.hours + ':' + hms.minutes + ':' + hms.seconds;
         }
 
-        hms.hours = hms.hours.toString().padStart(2, '0');
-        hms.minutes = hms.minutes.toString().padStart(2, '0');
-        hms.seconds = hms.seconds.toString().padStart(2, '0');
-        const str = hms.hours + ':' + hms.minutes + ':' + hms.seconds;
-
-        return $('span', {style: {fontFamily: 'monospace'}, className: 'label label-rounded label-' + color}, str);
+        return $('span', {style: {fontFamily: 'monospace'}, className: 'label label-rounded' + color}, str);
     }
 
     renderAnswers() {

@@ -9,8 +9,7 @@ module.exports = {
     },
     entry: {
         styles: './styles.js',
-        user: './user.js',
-        admin: './admin.js'
+        user: './user.js'
     },
     output: {
         filename: '[name].app.js',

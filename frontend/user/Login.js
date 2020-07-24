@@ -27,7 +27,7 @@ export default class Login extends Component {
     }
 
     fetchCourses() {
-        call(ezRPC('ezcbt/GetCourses'), {incl_locked: false}, (res => {
+        call(ezRPC('user/GetCourses'), {incl_locked: false}, (res => {
             if (res.code == 200) {
                 const courses = [{id: '', title: '-- pilih materi --'}];
                 for (let course of res.value) {

@@ -25,10 +25,17 @@ class User extends CI_Controller {
         if (!empty($course_id) && !empty($user_id)) {
             $this->load->model('users_model');
 
-            $user = $this->users_model->get($user_id, $course_id, 'name');
+            $user = $this->users_model->get($user_id, 'name');
             if (isset($user)) {
-                $this->auth->set_payload(['user_id' => $user_id], SERVER_SECRET);
-                $this->rpc->reply(['name' => $user['name']]);
+                $this->load->model('sessions_model');
+
+                $session = $this->sessions_model->get($course_id, $user_id, 'user_id');
+                if (isset($session)) {
+                    $this->auth->set_payload(['course_id' => $course_id, 'user_id' => $user_id], SERVER_SECRET);
+                    $this->rpc->reply(['name' => $user['name']]);
+                } else {
+                    $this->rpc->error('anda tidak didaftarkan untuk mengikuti tes ini', 403);
+                }
             } else {
                 $this->rpc->error('user ID tidak terdaftar', 404);
             }
@@ -38,10 +45,11 @@ class User extends CI_Controller {
     }
 
     public function GetHeaderInfo() {
-        $this->load->model('courses_model');
+        $this->load->model(['courses_model', 'users_model']);
 
-        $user = $this->get_user('course_id,name');
-        $course = $this->courses_model->get($user['course_id'], TRUE, 'title');
+        $session = $this->get_session('user_id,course_id');
+        $course = $this->courses_model->get($session['course_id'], TRUE, 'title');
+        $user = $this->users_model->get($session['user_id'], 'name');
         if (isset($course)) {
             $this->rpc->reply(['course_title' => $course['title'], 'user_name' => $user['name']]);
         } else {
@@ -49,11 +57,23 @@ class User extends CI_Controller {
         }
     }
 
+    public function GetFooterInfo() {
+        $this->rpc->reply(['copyright_year' => COPYRIGHT_YEAR, 'copyright_owner' => COPYRIGHT_OWNER]);
+    }
+
+    public function GetCourses() {
+        $this->load->model('courses_model');
+
+        $incl_locked = $this->rpc->param('incl_locked');
+
+        $this->rpc->reply($this->courses_model->get(NULL, !empty($incl_locked), 'course_id,title'));
+    }
+
     public function GetCourseDetails() {
         $this->load->model('courses_model');
 
-        $user = $this->get_user('course_id');
-        $course = $this->courses_model->get($user['course_id'], TRUE, 'title,description,locked,duration,num_choices,num_questions,allow_empty,score_correct,score_empty,score_wrong');
+        $session = $this->get_session('course_id');
+        $course = $this->courses_model->get($session['course_id'], TRUE, 'title,description,locked,duration,num_choices,num_questions,allow_empty,score_correct,score_empty,score_wrong');
         if (isset($course)) {
             $this->rpc->reply($course);
         } else {
@@ -62,24 +82,24 @@ class User extends CI_Controller {
     }
 
     public function GetStatus() {
-        $this->load->model(['courses_model', 'users_model']);
+        $this->load->model(['courses_model', 'sessions_model']);
 
-        $user = $this->get_user('user_id');
-        $this->users_model->update_state($user['user_id']);
+        $session = $this->get_session('course_id,user_id');
+        $this->sessions_model->update_state($session['course_id'], $session['user_id']);
 
-        $user = $this->get_user('course_id,answer_data,start_time,state');
-        $course = $this->courses_model->get($user['course_id'], TRUE, 'duration,num_questions');
+        $session = $this->get_session('course_id,answer_data,start_time,state');
+        $course = $this->courses_model->get($session['course_id'], TRUE, 'duration,num_questions');
         if (isset($course)) {
             $status = [];
-            $status['state'] = $user['state'];
+            $status['state'] = $session['state'];
             if ($status['state'] !== 'not started') {
                 $status['num_answered'] = 0;
                 for ($i = 0; $i < $course['num_questions']; $i++) {
-                    if ($user['answer_data'][$i] !== '-') {
+                    if ($session['answer_data'][$i] !== '-') {
                         $status['num_answered']++;
                     }
                 }
-                $status['seconds_left'] = max($user['start_time'] + $course['duration'] - time(), 0);
+                $status['seconds_left'] = max($session['start_time'] + $course['duration'] - time(), 0);
             }
             $this->rpc->reply($status);
         } else {
@@ -88,9 +108,9 @@ class User extends CI_Controller {
     }
 
     public function GetCoursePDFURL() {
-        $user = $this->get_user('course_id');
+        $session = $this->get_session('course_id');
 
-        $payload = ['course_id' => $user['course_id'], '__t' => time()];
+        $payload = ['course_id' => $session['course_id'], '__t' => time()];
         $token = [];
         $token[0] = base64_encode(json_encode($payload));
         $token[1] = hash_hmac('sha256', $token[0], SERVER_SECRET);
@@ -99,21 +119,21 @@ class User extends CI_Controller {
     }
 
     public function Start() {
-        $this->load->model('users_model');
+        $this->load->model('sessions_model');
 
-        $user = $this->get_user('user_id');
-        $this->users_model->update_state($user['user_id']);
+        $session = $this->get_session('course_id,user_id');
+        $this->sessions_model->update_state($session['course_id'], $session['user_id']);
 
-        $user = $this->users_model->get($user['user_id'], NULL, 'user_id,state');
-        if ($user['state'] === 'not started') {
+        $session = $this->get_session('course_id,user_id,state');
+        if ($session['state'] === 'not started') {
             $data = [];
             $data['start_time'] = time();
             $data['state'] = 'started';
-            $this->users_model->set($user['user_id'], $data);
+            $this->sessions_model->set($session['course_id'], $session['user_id'], $data);
             $this->rpc->reply();
-        } else if ($user['state'] === 'started') {
+        } else if ($session['state'] === 'started') {
             $this->rpc->reply();
-        } else if ($user['state'] === 'finished') {
+        } else if ($session['state'] === 'finished') {
             $this->rpc->error('anda telah menyelesaikan tes ini', 403);
         } else {
             $this->rpc->error('unknown user state', 500);
@@ -121,22 +141,22 @@ class User extends CI_Controller {
     }
 
     public function Finish() {
-        $user = $this->get_user('user_id,course_id,answer_data,state');
-        if ($user['state'] === 'started') {
+        $session = $this->get_session('course_id,user_id,answer_data,state');
+        if ($session['state'] === 'started') {
             $this->load->model('courses_model');
 
-            $course = $this->courses_model->get($user['course_id'], TRUE, 'num_questions,allow_empty');
+            $course = $this->courses_model->get($session['course_id'], TRUE, 'num_questions,allow_empty');
             if (isset($course)) {
-                $this->load->model('users_model');
+                $this->load->model('sessions_model');
 
                 for ($i = 0; $i < $course['num_questions']; $i++) {
-                    if (($user['answer_data'][$i] === '-') && ($course['allow_empty'] == 0)) {
+                    if (($session['answer_data'][$i] === '-') && ($course['allow_empty'] == 0)) {
                         $this->rpc->error('masih terdapat beberapa soal yang belum dijawab', 403);
                         return;
                     }
                 }
 
-                $this->users_model->set($user['user_id'], ['state' => 'finished']);
+                $this->sessions_model->set($session['course_id'], $session['user_id'], ['state' => 'finished']);
                 $this->rpc->reply();
             } else {
                 $this->rpc->error('tes tidak terdaftar', 404);
@@ -147,20 +167,20 @@ class User extends CI_Controller {
     }
 
     public function GetAnswerData() {
-        $user = $this->get_user('answer_data');
+        $session = $this->get_session('answer_data');
 
-        $this->rpc->reply($user['answer_data']);
+        $this->rpc->reply($session['answer_data']);
     }
 
     public function Mark() {
         $this->load->model(['courses_model', 'users_model']);
 
-        $user = $this->get_user('user_id');
-        $this->users_model->update_state($user['user_id']);
+        $session = $this->get_session('course_id,user_id');
+        $this->sessions_model->update_state($session['course_id'], $session['user_id']);
 
-        $user = $this->get_user('user_id,course_id,answer_data,state');
-        if ($user['state'] === 'started') {
-            $course = $this->courses_model->get($user['course_id'], TRUE, 'num_choices,num_questions,allow_empty');
+        $session = $this->get_session('course_id,user_id,answer_data,state');
+        if ($session['state'] === 'started') {
+            $course = $this->courses_model->get($session['course_id'], TRUE, 'num_choices,num_questions,allow_empty');
             if (isset($course)) {
                 $question_id = $this->rpc->param('question_id');
                 $choice_id = $this->rpc->param('choice_id');
@@ -172,8 +192,8 @@ class User extends CI_Controller {
                         $choice_id = '-';
                     }
                     if ((($choice_id === '-') && ($course['allow_empty'] == 1)) || ($choice_id !== '-')) {
-                        $user['answer_data'][$question_id] = $choice_id;
-                        $this->users_model->set($user['user_id'], ['answer_data' => $user['answer_data']]);
+                        $session['answer_data'][$question_id] = $choice_id;
+                        $this->sessions_model->set($session['course_id'], $session['user_id'], ['answer_data' => $session['answer_data']]);
                         $this->rpc->reply();
                     } else {
                         $this->rpc->error('pilihan jawaban anda tidak valid');
@@ -189,19 +209,18 @@ class User extends CI_Controller {
         }
     }
 
-    private function get_user($columns = '*') {
+    private function get_session($columns = '*') {
         $this->auth->check(SERVER_SECRET);
 
         $payload = $this->auth->get_payload();
-        if (isset($payload['user_id'])) {
-            $this->load->model('users_model');
+        if (isset($payload['course_id']) && isset($payload['user_id'])) {
+            $this->load->model('sessions_model');
 
-            $user_id = $payload['user_id'];
-            $user = $this->users_model->get($user_id, NULL, $columns);
-            if (isset($user)) {
-                return $user;
+            $session = $this->sessions_model->get($payload['course_id'], $payload['user_id'], $columns);
+            if (isset($session)) {
+                return $session;
             } else {
-                $this->rpc->error('user ID tidak ditemukan', 404);
+                $this->rpc->error('sesi tidak terdaftar', 404);
                 exit();
             }
         } else {

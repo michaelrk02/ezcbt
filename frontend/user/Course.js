@@ -73,7 +73,7 @@ export default class Course extends Component {
             ]),
             $('div', {className: 'columns', style: {paddingTop: '1rem'}}, [
                 $('div', {className: 'column col-auto'}, [
-                    $('button', {style: {margin: '0.25rem'}, className: 'btn btn-success', disabled: (this.state.userStatus.state === 'finished') || (this.state.course.locked == 1) || this.state.starting, onClick: this.onStart}, this.state.starting ? 'Memulai ...' : (this.state.userStatus.state === 'started' ? 'Lanjutkan' : 'Mulai'))
+                    $('button', {type: 'button', style: {margin: '0.25rem'}, className: 'btn btn-success', disabled: (this.state.userStatus.state === 'finished') || (this.state.course.locked == 1) || this.state.starting, onClick: this.onStart}, this.state.starting ? 'Memulai ...' : (this.state.userStatus.state === 'started' ? 'Lanjutkan' : 'Mulai'))
                 ])
             ])
         ]);
