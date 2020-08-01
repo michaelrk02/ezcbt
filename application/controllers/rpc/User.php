@@ -44,6 +44,19 @@ class User extends CI_Controller {
         }
     }
 
+    public function GetAppInfo() {
+        $logo = FCPATH.APP_LOGO;
+        if (file_exists($logo)) {
+            $logo = base_url(APP_LOGO);
+        } else {
+            $logo = NULL;
+        }
+        $this->rpc->reply([
+            'title' => APP_TITLE,
+            'logo' => $logo
+        ]);
+    }
+
     public function GetHeaderInfo() {
         $this->load->model(['courses_model', 'users_model']);
 
@@ -51,7 +64,10 @@ class User extends CI_Controller {
         $course = $this->courses_model->get($session['course_id'], TRUE, 'title');
         $user = $this->users_model->get($session['user_id'], 'name');
         if (isset($course)) {
-            $this->rpc->reply(['course_title' => $course['title'], 'user_name' => $user['name']]);
+            $this->rpc->reply([
+                'course_title' => $course['title'],
+                'user_name' => $user['name']
+            ]);
         } else {
             $this->rpc->error('tes tidak terdaftar', 404);
         }
@@ -73,7 +89,7 @@ class User extends CI_Controller {
         $this->load->model('courses_model');
 
         $session = $this->get_session('course_id');
-        $course = $this->courses_model->get($session['course_id'], TRUE, 'title,description,locked,duration,num_choices,num_questions,allow_empty,score_correct,score_empty,score_wrong');
+        $course = $this->courses_model->get($session['course_id'], TRUE, 'title,description,locked,duration,num_questions,num_choices,allow_empty,score_correct,score_empty,score_wrong');
         if (isset($course)) {
             $this->rpc->reply($course);
         } else {
@@ -109,13 +125,7 @@ class User extends CI_Controller {
 
     public function GetCoursePDFURL() {
         $session = $this->get_session('course_id');
-
-        $payload = ['course_id' => $session['course_id'], '__t' => time()];
-        $token = [];
-        $token[0] = base64_encode(json_encode($payload));
-        $token[1] = hash_hmac('sha256', $token[0], SERVER_SECRET);
-        $token = implode(':', $token);
-        $this->rpc->reply(base_url('public/pdfjs/web/viewer.html').'?file='.urlencode(site_url('content/course_pdf').'?token='.urlencode($token)));
+        $this->rpc->reply($this->ezcbt->course_pdf_url($session['course_id']));
     }
 
     public function Start() {
@@ -180,7 +190,7 @@ class User extends CI_Controller {
 
         $session = $this->get_session('course_id,user_id,answer_data,state');
         if ($session['state'] === 'started') {
-            $course = $this->courses_model->get($session['course_id'], TRUE, 'num_choices,num_questions,allow_empty');
+            $course = $this->courses_model->get($session['course_id'], TRUE, 'num_questions,num_choices,allow_empty');
             if (isset($course)) {
                 $question_id = $this->rpc->param('question_id');
                 $choice_id = $this->rpc->param('choice_id');

@@ -51,6 +51,16 @@ class Ezcbt {
         return '<div></div>';
     }
 
+    public function course_pdf_url($id) {
+        $payload = ['course_id' => $id, '__t' => time()];
+        $token = [];
+        $token[0] = base64_encode(json_encode($payload));
+        $token[1] = hash_hmac('sha256', $token[0], SERVER_SECRET);
+        $token = implode(':', $token);
+
+        return base_url('public/pdfjs/web/viewer.html').'?file='.urlencode(site_url('content/course_pdf').'?token='.urlencode($token));
+    }
+
 }
 
 ?>

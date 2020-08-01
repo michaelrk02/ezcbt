@@ -1,5 +1,6 @@
 application/cache/
 application/logs/
+application/third_party/ezcbt/course/*
 extern/
 frontend/node_modules/
 presets/production/

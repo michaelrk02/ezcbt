@@ -1,3 +1,4 @@
+<?php echo $status; ?>
 <div class="columns">
     <div class="column col-4 col-md-6 col-sm-12">
         <div class="empty" style="margin: 0.5rem; box-shadow: 0px 0px 8px lightgray">

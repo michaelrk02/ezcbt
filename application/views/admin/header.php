@@ -1,15 +1,16 @@
 <html>
     <head>
-        <title>CBT Admin<?php echo !empty($title) ? ' - '.$title : ''; ?></title>
+        <title>ezCBT Admin<?php echo !empty($title) ? ' - '.$title : ''; ?></title>
         <script src="<?php echo site_url('content').'?type=text%2Fjavascript&path=public%2Fjquery.min.js&cache=86400'; ?>"></script>
         <script src="<?php echo site_url('content').'?type=text%2Fjavascript&path=public%2Fstyles.app.js&cache=86400'; ?>"></script>
+        <meta name="viewport" content="width=device-width,initial-scale=1">
     </head>
     <body>
         <div class="app-container">
             <div class="app-content">
-                <header class="columns bg-secondary" style="box-shadow: 0px 0px 16px lightgray">
+                <header class="columns bg-secondary" style="margin: 0; box-shadow: 0px 0px 16px lightgray">
                     <div class="column bg-primary" style="padding: 1rem">
-                        <h3>Computer-Based Test</h3>
+                        <h3>ezCBT Backend</h3>
                         <h5>Admin Page</h5>
                     </div>
                     <?php if (!empty($_SESSION['ezcbt_admin'])) { ?>

@@ -35,14 +35,19 @@ export default class Header extends Component {
     }
 
     render() {
-        return $('div', {className: 'columns bg-secondary', style: {boxShadow: '0px 0px 16px lightgray'}}, [
+        return $('div', {className: 'columns bg-secondary', style: {margin: '0', boxShadow: '0px 0px 16px lightgray'}}, [
+            this.props.logo === null ?
+                null :
+                $('div', {className: 'column col-auto col-sm-12', style: {padding: '0.5rem'}}, [
+                    $('img', {src: this.props.logo, width: '100px', height: '100px', style: {display: 'block', margin: 'auto'}})
+                ]),
             $('div', {className: 'column bg-primary', style: {padding: '1rem'}}, [
-                $('h3', null, 'Computer-Based Test'),
-                $('h5', null, this.state.courseTitle !== null ? this.state.courseTitle : 'CBT application')
+                $('h3', null, this.props.title !== null ? this.props.title : 'ezCBT'),
+                $('h5', null, this.state.courseTitle !== null ? this.state.courseTitle : 'Computer-Based Test')
             ]),
             this.state.userName === null ?
                 null :
-                $('div', {className: 'column col-auto', style: {padding: '1rem', marginTop: 'auto', marginBottom: 'auto'}}, [
+                $('div', {className: 'column col-auto', style: {margin: 'auto'}}, [
                     $('div', {className: 'dropdown dropdown-right'}, [
                         $('button', {type: 'button', className: 'btn btn-lg btn-secondary s-circle dropdown-toggle'}, $('i', {className: 'icon icon-people'})),
                         $('ul', {className: 'menu'}, [

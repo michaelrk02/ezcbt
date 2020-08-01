@@ -1,6 +1,9 @@
 import {Component, createElement as $, createRef} from 'react';
 import {BrowserRouter as Router, Route, Switch} from 'react-router-dom';
 
+import {call} from '../lib/rpc.js';
+import {ezRPC} from '../lib/ezrpc.js';
+
 import Header from './Header.js';
 import Footer from './Footer.js';
 
@@ -15,13 +18,30 @@ export default class App extends Component {
 
     constructor(props) {
         super(props);
+        this.state = {
+            app: null
+        };
+    }
+
+    componentDidMount() {
+        call(ezRPC('user/GetAppInfo'), null, (res => {
+            if (res.code == 200) {
+                this.setState({app: res.value});
+            } else {
+                window.alert('Gagal menghubungi server: ' + res.status + '. Mohon coba lagi');
+            }
+        }).bind(this));
     }
 
     render() {
+        if (this.state.app === null) {
+            return $('div', null, 'Loading ...');
+        }
+
         return $(Router, {basename: this.props.basename}, [
             $('div', {className: 'app-container'}, [
                 $('div', {className: 'app-content'}, [
-                    $(Route, {path: '/', render: ({history}) => $(Header, {history: history, ref: window.header})}),
+                    $(Route, {path: '/', render: ({history}) => $(Header, {history: history, title: this.state.app.title, logo: this.state.app.logo, ref: window.header})}),
                     $(Switch, null, [
                         $(Route, {exact: true, path: '/', component: Landing}),
                         $(Route, {exact: true, path: '/login', component: Login}),
