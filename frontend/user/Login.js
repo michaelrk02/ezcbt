@@ -8,11 +8,9 @@ export default class Login extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            courseID: '',
-            userID: '',
-            userIDShown: false,
-            loggingIn: false,
-            courses: null
+            sessionID: '',
+            sessionIDShown: false,
+            loggingIn: false
         };
 
         this.redirect = '/course';
@@ -20,24 +18,9 @@ export default class Login extends Component {
             this.redirect = this.props.location.state.redirect;
         }
 
-        this.onCourseChange = this.onCourseChange.bind(this);
-        this.onUserIDChange = this.onUserIDChange.bind(this);
-        this.onUserIDShowToggle = this.onUserIDShowToggle.bind(this);
+        this.onSessionIDChange = this.onSessionIDChange.bind(this);
+        this.onSessionIDShowToggle = this.onSessionIDShowToggle.bind(this);
         this.onLogin = this.onLogin.bind(this);
-    }
-
-    fetchCourses() {
-        call(ezRPC('user/GetCourses'), {incl_locked: false}, (res => {
-            if (res.code == 200) {
-                const courses = [{id: '', title: '-- pilih materi --'}];
-                for (let course of res.value) {
-                    courses.push({id: course.course_id, title: course.title});
-                }
-                this.setState({courses: courses});
-            } else {
-                window.alert('Gagal mendapatkan list materi: ' + res.status + '. Mohon coba lagi');
-            }
-        }).bind(this));
     }
 
     componentDidMount() {
@@ -46,17 +29,11 @@ export default class Login extends Component {
                 this.props.location.replace(this.redirect);
             } else if (res.code != 401) {
                 window.alert('Gagal mengecek login: ' + res.status);
-            } else {
-                this.fetchCourses();
             }
         }).bind(this));
     }
 
     render() {
-        if (this.state.courses === null) {
-            return $('div', null, 'Loading ...');
-        }
-
         return $('div', {className: 'container grid-xs', style: {marginTop: '2rem', marginBottom: '2rem'}}, [
             $('div', {className: 'card'}, [
                 $('div', {className: 'card-image'}, [
@@ -68,23 +45,17 @@ export default class Login extends Component {
                 ]),
                 $('div', {className: 'card-header'}, [
                     $('div', {className: 'card-title h5'}, 'Login'),
-                    $('div', {className: 'card-subtitle text-gray'}, 'Masukkan materi dan user ID di bawah')
+                    $('div', {className: 'card-subtitle text-gray'}, 'Masukkan token atau ID sesi di bawah')
                 ]),
                 $('form', {onSubmit: this.onLogin}, [
                     $('div', {className: 'card-body'}, [
                         $('div', {className: 'form-group'}, [
-                            $('label', {className: 'form-label'}, 'Materi'),
-                            $('select', {className: 'form-select', value: this.state.courseID, onChange: this.onCourseChange}, this.state.courses.map((course => {
-                                return $('option', {value: course.id}, course.title);
-                            }).bind(this)))
-                        ]),
-                        $('div', {className: 'form-group'}, [
-                            $('label', {className: 'form-label'}, 'User ID'),
-                            $('input', {type: this.state.userIDShown ? 'text' : 'password', className: 'form-input', style: {fontFamily: 'monospace'}, placeholder: 'Masukkan user ID', onChange: this.onUserIDChange}),
+                            $('label', {className: 'form-label'}, 'Token'),
+                            $('input', {type: this.state.sessionIDShown ? 'text' : 'password', className: 'form-input', style: {fontFamily: 'monospace'}, placeholder: 'Masukkan token', onChange: this.onSessionIDChange}),
                             $('label', {className: 'form-checkbox'}, [
-                                $('input', {type: 'checkbox', checked: this.state.userIDShown, onChange: this.onUserIDShowToggle}),
+                                $('input', {type: 'checkbox', checked: this.state.sessionIDShown, onChange: this.onSessionIDShowToggle}),
                                 $('i', {className: 'form-icon'}),
-                                ' Perlihatkan user ID'
+                                ' Perlihatkan token'
                             ])
                         ])
                     ]),
@@ -96,16 +67,12 @@ export default class Login extends Component {
         ]);
     }
 
-    onCourseChange(e) {
-        this.setState({courseID: e.target.value});
+    onSessionIDChange(e) {
+        this.setState({sessionID: e.target.value});
     }
 
-    onUserIDChange(e) {
-        this.setState({userID: e.target.value});
-    }
-
-    onUserIDShowToggle(e) {
-        this.setState({userIDShown: e.target.checked});
+    onSessionIDShowToggle(e) {
+        this.setState({sessionIDShown: e.target.checked});
     }
 
     onLogin(e) {
@@ -113,7 +80,7 @@ export default class Login extends Component {
 
         this.setState({loggingIn: true});
 
-        call(ezRPC('user/Login'), {course_id: this.state.courseID, user_id: this.state.userID}, (res => {
+        call(ezRPC('user/Login'), {session_id: this.state.sessionID}, (res => {
             if (res.code == 200) {
                 window.alert('Login berhasil. Selamat datang, ' + res.value.name + '!');
                 window.header.current.setState({update: true});

@@ -20,24 +20,23 @@ class User extends CI_Controller {
             unset($this->rpc->cookie[$this->auth->cookie]);
         }
 
-        $course_id = $this->rpc->param('course_id');
-        $user_id = $this->rpc->param('user_id');
-        if (!empty($course_id) && !empty($user_id)) {
-            $this->load->model('users_model');
+        $session_id = $this->rpc->param('session_id');
+        if (!empty($session_id)) {
+            $this->load->model('sessions_model');
 
-            $user = $this->users_model->get($user_id, 'name');
-            if (isset($user)) {
-                $this->load->model('sessions_model');
+            $session = $this->sessions_model->get($session_id, 'user_id');
+            if (isset($session)) {
+                $this->load->model('users_model');
 
-                $session = $this->sessions_model->get($course_id, $user_id, 'user_id');
-                if (isset($session)) {
-                    $this->auth->set_payload(['course_id' => $course_id, 'user_id' => $user_id], SERVER_SECRET);
+                $user = $this->users_model->get($session['user_id'], 'name');
+                if (isset($user)) {
+                    $this->auth->set_payload(['session_id' => $session_id], SERVER_SECRET);
                     $this->rpc->reply(['name' => $user['name']]);
                 } else {
-                    $this->rpc->error('anda tidak didaftarkan untuk mengikuti tes ini', 403);
+                    $this->rpc->error('anda tidak terdaftar sebagai peserta. Ini merupakan kesalahan internal server, mohon hubungi panitia', 500);
                 }
             } else {
-                $this->rpc->error('user ID tidak terdaftar', 404);
+                $this->rpc->error('ID sesi anda tidak valid. Cek penulisan sekali lagi', 403);
             }
         } else {
             $this->rpc->error();
@@ -100,8 +99,8 @@ class User extends CI_Controller {
     public function GetStatus() {
         $this->load->model(['courses_model', 'sessions_model']);
 
-        $session = $this->get_session('course_id,user_id');
-        $this->sessions_model->update_state($session['course_id'], $session['user_id']);
+        $session = $this->get_session('session_id');
+        $this->sessions_model->update_state($session['session_id']);
 
         $session = $this->get_session('course_id,answer_data,start_time,state');
         $course = $this->courses_model->get($session['course_id'], TRUE, 'duration,num_questions');
@@ -131,15 +130,15 @@ class User extends CI_Controller {
     public function Start() {
         $this->load->model('sessions_model');
 
-        $session = $this->get_session('course_id,user_id');
-        $this->sessions_model->update_state($session['course_id'], $session['user_id']);
+        $session = $this->get_session('session_id');
+        $this->sessions_model->update_state($session['session_id']);
 
-        $session = $this->get_session('course_id,user_id,state');
+        $session = $this->get_session('session_id,state');
         if ($session['state'] === 'not started') {
             $data = [];
             $data['start_time'] = time();
             $data['state'] = 'started';
-            $this->sessions_model->set($session['course_id'], $session['user_id'], $data);
+            $this->sessions_model->set($session['session_id'], $data);
             $this->rpc->reply();
         } else if ($session['state'] === 'started') {
             $this->rpc->reply();
@@ -151,7 +150,7 @@ class User extends CI_Controller {
     }
 
     public function Finish() {
-        $session = $this->get_session('course_id,user_id,answer_data,state');
+        $session = $this->get_session('session_id,course_id,answer_data,state');
         if ($session['state'] === 'started') {
             $this->load->model('courses_model');
 
@@ -166,7 +165,7 @@ class User extends CI_Controller {
                     }
                 }
 
-                $this->sessions_model->set($session['course_id'], $session['user_id'], ['state' => 'finished']);
+                $this->sessions_model->set($session['session_id'], ['state' => 'finished']);
                 $this->rpc->reply();
             } else {
                 $this->rpc->error('tes tidak terdaftar', 404);
@@ -185,10 +184,10 @@ class User extends CI_Controller {
     public function Mark() {
         $this->load->model(['courses_model', 'users_model']);
 
-        $session = $this->get_session('course_id,user_id');
-        $this->sessions_model->update_state($session['course_id'], $session['user_id']);
+        $session = $this->get_session('session_id');
+        $this->sessions_model->update_state($session['session_id']);
 
-        $session = $this->get_session('course_id,user_id,answer_data,state');
+        $session = $this->get_session('session_id,course_id,answer_data,state');
         if ($session['state'] === 'started') {
             $course = $this->courses_model->get($session['course_id'], TRUE, 'num_questions,num_choices,allow_empty');
             if (isset($course)) {
@@ -203,7 +202,7 @@ class User extends CI_Controller {
                     }
                     if ((($choice_id === '-') && ($course['allow_empty'] == 1)) || ($choice_id !== '-')) {
                         $session['answer_data'][$question_id] = $choice_id;
-                        $this->sessions_model->set($session['course_id'], $session['user_id'], ['answer_data' => $session['answer_data']]);
+                        $this->sessions_model->set($session['session_id'], ['answer_data' => $session['answer_data']]);
                         $this->rpc->reply();
                     } else {
                         $this->rpc->error('pilihan jawaban anda tidak valid');
@@ -223,10 +222,10 @@ class User extends CI_Controller {
         $this->auth->check(SERVER_SECRET);
 
         $payload = $this->auth->get_payload();
-        if (isset($payload['course_id']) && isset($payload['user_id'])) {
+        if (isset($payload['session_id'])) {
             $this->load->model('sessions_model');
 
-            $session = $this->sessions_model->get($payload['course_id'], $payload['user_id'], $columns);
+            $session = $this->sessions_model->get($payload['session_id'], $columns);
             if (isset($session)) {
                 return $session;
             } else {
