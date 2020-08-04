@@ -24,7 +24,7 @@
                                     <li class="menu-item"><a href="<?php echo site_url('admin/course_manage'); ?>">Kelola Materi</a></li>
                                     <li class="menu-item"><a href="<?php echo site_url('admin/user_manage'); ?>">Kelola Peserta</a></li>
                                     <li class="menu-item"><a href="<?php echo site_url('admin/session_manage'); ?>">Kelola Sesi</a></li>
-                                    <li class="menu-item"><a href="<?php echo site_url('admin/view_results'); ?>">Tinjau Hasil</a></li>
+                                    <li class="menu-item"><a href="<?php echo site_url('admin/session_manage').'?state=finished'; ?>">Tinjau Hasil</a></li>
                                     <li class="menu-item"><a onclick="return window.confirm('Apakah anda yakin ingin keluar?')" href="<?php echo site_url('admin/logout'); ?>" class="text-error">Logout</a></li>
                                 </ul>
                             </div>

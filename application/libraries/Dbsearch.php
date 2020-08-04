@@ -8,13 +8,11 @@ class Dbsearch {
         $this->CI =& get_instance();
     }
 
-    public function validate_get_params($default_match = '', $default_page = 1, $default_items = 10, $match_param = 'match', $page_param = 'page', $items_param = 'items') {
-        $_GET[$match_param] = isset($_GET[$match_param]) ? $_GET[$match_param] : $default_match;
-        $_GET[$page_param] = isset($_GET[$page_param]) ? $_GET[$page_param] : $default_page;
-        $_GET[$items_param] = isset($_GET[$items_param]) ? $_GET[$items_param] : $default_items;
-    }
+    public function search($table, $criterion, $columns, $match_param = 'match', $page_param = 'page', $items_param = 'items') {
+        $match = isset($_GET[$match_param]) ? $_GET[$match_param] : '';
+        $page = isset($_GET[$page_param]) ? $_GET[$page_param] : 1;
+        $items = isset($_GET[$items_param]) ? $_GET[$items_param] : 15;
 
-    public function search($table, $criterion, $columns, $match, $page, $items) {
         $result = [];
 
         $this->CI->load->database();
@@ -37,6 +35,10 @@ class Dbsearch {
         } else {
             $result['data'] = [];
         }
+
+        $_GET['match'] = $match;
+        $_GET['page'] = $page;
+        $_GET['items'] = $items;
 
         return $result;
     }

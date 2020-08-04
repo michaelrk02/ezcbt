@@ -88,8 +88,11 @@ class User extends CI_Controller {
         $this->load->model('courses_model');
 
         $session = $this->get_session('course_id');
-        $course = $this->courses_model->get($session['course_id'], TRUE, 'title,description,locked,duration,num_questions,num_choices,allow_empty,score_correct,score_empty,score_wrong');
+        $course = $this->courses_model->get($session['course_id'], TRUE, 'title,description,locked,duration,num_questions,num_choices,allow_empty,score_correct,score_empty,score_wrong,signature');
         if (isset($course)) {
+            $signature = $course['signature'];
+            unset($course['signature']);
+            $this->rpc->cookie['course_signature'] = $signature;
             $this->rpc->reply($course);
         } else {
             $this->rpc->error('tes tidak terdaftar', 404);
@@ -133,13 +136,24 @@ class User extends CI_Controller {
         $session = $this->get_session('session_id');
         $this->sessions_model->update_state($session['session_id']);
 
-        $session = $this->get_session('session_id,state');
+        $session = $this->get_session('session_id,course_id,state');
         if ($session['state'] === 'not started') {
-            $data = [];
-            $data['start_time'] = time();
-            $data['state'] = 'started';
-            $this->sessions_model->set($session['session_id'], $data);
-            $this->rpc->reply();
+            $this->load->model('courses_model');
+
+            $course = $this->courses_model->get($session['course_id'], TRUE, 'locked');
+            if (isset($course)) {
+                if ($course['locked'] == 0) {
+                    $data = [];
+                    $data['start_time'] = time();
+                    $data['state'] = 'started';
+                    $this->sessions_model->set($session['session_id'], $data);
+                    $this->rpc->reply();
+                } else {
+                    $this->rpc->error('materi masih terkunci', 403);
+                }
+            } else {
+                $this->rpc->error('materi tidak terdaftar', 500);
+            }
         } else if ($session['state'] === 'started') {
             $this->rpc->reply();
         } else if ($session['state'] === 'finished') {
@@ -166,6 +180,7 @@ class User extends CI_Controller {
                 }
 
                 $this->sessions_model->set($session['session_id'], ['state' => 'finished']);
+                $this->sessions_model->calculate_score($session['session_id']);
                 $this->rpc->reply();
             } else {
                 $this->rpc->error('tes tidak terdaftar', 404);
@@ -189,26 +204,31 @@ class User extends CI_Controller {
 
         $session = $this->get_session('session_id,course_id,answer_data,state');
         if ($session['state'] === 'started') {
-            $course = $this->courses_model->get($session['course_id'], TRUE, 'num_questions,num_choices,allow_empty');
+            $course = $this->courses_model->get($session['course_id'], TRUE, 'num_questions,num_choices,allow_empty,signature');
             if (isset($course)) {
-                $question_id = $this->rpc->param('question_id');
-                $choice_id = $this->rpc->param('choice_id');
-                if (isset($question_id) && isset($choice_id) && ($question_id < $course['num_questions'])) {
-                    $question_id = max(0, $question_id);
-                    if (is_numeric($choice_id)) {
-                        $choice_id = max(min($choice_id, $course['num_choices'] - 1), 0);
+                $remote_signature = $this->rpc->cookie['course_signature'];
+                if (!empty($remote_signature) && ($remote_signature === $course['signature'])) {
+                    $question_id = $this->rpc->param('question_id');
+                    $choice_id = $this->rpc->param('choice_id');
+                    if (isset($question_id) && isset($choice_id)) {
+                        $question_id = min(max(0, $question_id), $course['num_questions'] - 1);
+                        if (is_numeric($choice_id)) {
+                            $choice_id = min(max(0, $choice_id), $course['num_choices'] - 1);
+                        } else {
+                            $choice_id = '-';
+                        }
+                        if ((($choice_id === '-') && ($course['allow_empty'] == 1)) || ($choice_id !== '-')) {
+                            $session['answer_data'][$question_id] = $choice_id;
+                            $this->sessions_model->set($session['session_id'], ['answer_data' => $session['answer_data']]);
+                            $this->rpc->reply();
+                        } else {
+                            $this->rpc->error('pilihan jawaban anda tidak valid');
+                        }
                     } else {
-                        $choice_id = '-';
-                    }
-                    if ((($choice_id === '-') && ($course['allow_empty'] == 1)) || ($choice_id !== '-')) {
-                        $session['answer_data'][$question_id] = $choice_id;
-                        $this->sessions_model->set($session['session_id'], ['answer_data' => $session['answer_data']]);
-                        $this->rpc->reply();
-                    } else {
-                        $this->rpc->error('pilihan jawaban anda tidak valid');
+                        $this->rpc->error();
                     }
                 } else {
-                    $this->rpc->error();
+                    $this->rpc->error('materi telah mengalami modifikasi. Silakan untuk meng-refresh halaman anda');
                 }
             } else {
                 $this->rpc->error('tes tidak terdaftar', 404);

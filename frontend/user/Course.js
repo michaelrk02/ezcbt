@@ -75,7 +75,10 @@ export default class Course extends Component {
                 $('div', {className: 'column col-auto'}, [
                     $('button', {type: 'button', style: {margin: '0.25rem'}, className: 'btn btn-success', disabled: (this.state.userStatus.state === 'finished') || (this.state.course.locked == 1) || this.state.starting, onClick: this.onStart}, this.state.starting ? 'Memulai ...' : (this.state.userStatus.state === 'started' ? 'Lanjutkan' : 'Mulai'))
                 ])
-            ])
+            ]),
+            this.state.course.locked == 0 ?
+                null :
+                $('p', null, 'Jika panitia sudah menginstruksikan untuk memulai pengerjaan sedangkan materi masih terkunci, silakan untuk meng-refresh halaman ini.')
         ]);
     }
 

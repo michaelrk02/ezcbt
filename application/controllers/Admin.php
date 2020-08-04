@@ -81,10 +81,8 @@ class Admin extends CI_Controller {
 
         $this->load->library('dbsearch');
 
-        $this->dbsearch->validate_get_params();
-
         $data = [];
-        $data['courses'] = $this->dbsearch->search('courses', 'title', 'course_id,title,locked,duration,num_questions', $_GET['match'], $_GET['page'], $_GET['items']);
+        $data['courses'] = $this->dbsearch->search('courses', 'title', 'course_id,title,locked,duration,num_questions');
         $data['status'] = $this->ezcbt->status();
 
         $this->render_header('Kelola Materi');
@@ -164,7 +162,7 @@ class Admin extends CI_Controller {
         $course['file_available'] = file_exists(APPPATH.'third_party/ezcbt/course/'.$course['course_id'].'.pdf');
         $course['_ezcbt_status'] = $this->ezcbt->status();
 
-        $this->render_header('Tambah Materi');
+        $this->render_header('Perbarui Materi');
         $this->load->view('admin/course_editor', $course);
         $this->render_footer();
     }
@@ -182,6 +180,7 @@ class Admin extends CI_Controller {
                 if ($this->courses_model->can_delete($id)) {
                     if (!empty($this->input->get('confirm'))) {
                         $this->courses_model->delete($id);
+                        unlink(APPPATH.'third_party/ezcbt/course/'.$id.'.pdf');
                         $this->ezcbt->success('Materi <b>'.$course['title'].'</b> berhasil dihapus');
                         redirect('admin/course_manage');
                     }
@@ -278,7 +277,7 @@ class Admin extends CI_Controller {
     }
 
     private function course_upload_pdf($id) {
-        if (isset($_FILES['course_pdf'])) {
+        if ($_FILES['course_pdf']['size'] != 0) {
             $this->load->library('upload');
 
             $this->upload->initialize([
@@ -286,11 +285,16 @@ class Admin extends CI_Controller {
                 'allowed_types' => 'pdf',
                 'file_name' => $id,
                 'file_ext_tolower' => TRUE,
-                'max_size' => 2048
+                'max_size' => 2048,
+                'overwrite' => TRUE
             ]);
 
             if (!$this->upload->do_upload('course_pdf')) {
                 $this->ezcbt->error('PDF upload error: '.$this->upload->display_errors().'. Please reupload the file with correct parameters');
+            } else {
+                $this->load->model('courses_model');
+
+                $this->courses_model->update_signature($id);
             }
         }
     }
@@ -302,10 +306,8 @@ class Admin extends CI_Controller {
 
         $this->load->library('dbsearch');
 
-        $this->dbsearch->validate_get_params();
-
         $data = [];
-        $data['users'] = $this->dbsearch->search('users', 'name', 'user_id,name', $_GET['match'], $_GET['page'], $_GET['items']);
+        $data['users'] = $this->dbsearch->search('users', 'name', 'user_id,name');
         $data['status'] = $this->ezcbt->status();
 
         $this->render_header('Kelola Peserta');
@@ -451,24 +453,107 @@ class Admin extends CI_Controller {
 
     public function session_manage() {
         $this->login_check();
+
+        $this->load->helper('text');
+        $this->load->model(['courses_model', 'users_model', 'sessions_model']);
+
+        $data = [];
+
+        $data['courses'] = array_merge([['course_id' => '', 'title' => '-- semua --']], $this->courses_model->get(NULL, TRUE, 'course_id,title'));
+        $data['users'] = array_merge([['user_id' => '', 'name' => '-- semua --']], $this->users_model->get(NULL, 'user_id,name'));
+        $data['states'] = [
+            ['id' => '', 'text' => '-- semua --'],
+            ['id' => 'not started', 'text' => 'Belum Mengerjakan'],
+            ['id' => 'started', 'text' => 'Sedang Mengerjakan'],
+            ['id' => 'finished', 'text' => 'Telah Menyelesaikan']
+        ];
+
+        $course_id = !empty($_GET['course_id']) ? $_GET['course_id'] : NULL;
+        $user_id = !empty($_GET['user_id']) ? $_GET['user_id'] : NULL;
+        $state = !empty($_GET['state']) ? $_GET['state'] : NULL;
+        $data['sessions'] = $this->sessions_model->filter($course_id, $user_id, $state);
+        $data['course_id'] = isset($course_id) ? $course_id : '';
+        $data['user_id'] = isset($user_id) ? $user_id : '';
+        $data['state'] = isset($state) ? $state : '';
+
+        $data['param'] = [];
+        $data['param'][] = 'course_id='.urlencode($data['course_id']);
+        $data['param'][] = 'user_id='.urlencode($data['user_id']);
+        $data['param'][] = 'state='.urlencode($data['state']);
+        $data['param'] = implode('&', $data['param']);
+
+        $data['status'] = $this->ezcbt->status();
+
+        $this->render_header('Kelola Sesi');
+        $this->load->view('admin/session_manage', $data);
+        $this->render_footer();
     }
 
     public function session_create() {
         $this->login_check();
-    }
 
-    public function session_view() {
-        $this->login_check();
+        $this->load->helper('form');
+        $this->load->model(['courses_model', 'users_model']);
+
+        if (!empty($this->input->post('submit'))) {
+            $this->load->library('form_validation');
+
+            $this->form_validation->set_rules('course_id', 'course ID', 'required');
+            $this->form_validation->set_rules('user_id', 'user ID', 'required');
+
+            if ($this->form_validation->run()) {
+                $course_id = $this->input->post('course_id');
+                $user_id = $this->input->post('user_id');
+
+                $course = $this->courses_model->get($course_id, TRUE, 'course_id');
+                $user = $this->users_model->get($user_id, 'user_id');
+                if (isset($course) && isset($user)) {
+                    $this->load->model('sessions_model');
+
+                    $this->sessions_model->create($course_id, $user_id);
+                    $this->ezcbt->success('Sesi berhasil dibuat!');
+
+                    $param = isset($_GET['param']) ? '?'.$_GET['param'] : '';
+
+                    redirect(site_url('admin/session_manage').$param);
+                } else {
+                    $this->ezcbt->error('materi atau peserta tidak terdaftar', 404);
+                }
+            } else {
+                $this->ezcbt->error(validation_errors());
+            }
+        }
+
+        $data = [];
+        $data['courses'] = array_merge([['course_id' => '', 'title' => '-- pilih --']], $this->courses_model->get(NULL, 'course_id,title'));
+        $data['users'] = array_merge([['user_id' => '', 'name' => '-- pilih --']], $this->users_model->get(NULL, 'user_id,name'));
+        $data['param'] = isset($_GET['param']) ? $_GET['param'] : '';
+        $data['status'] = $this->ezcbt->status();
+
+        $this->render_header('Tambah Sesi');
+        $this->load->view('admin/session_create', $data);
+        $this->render_footer();
     }
 
     public function session_delete() {
         $this->login_check();
-    }
 
-    // === RESULTS ===
+        $id = $this->input->get('id');
+        if (!empty($id)) {
+            $this->load->model('sessions_model');
 
-    public function view_results() {
-        $this->login_check();
+            $session = $this->sessions_model->get($id, 'session_id');
+            if (isset($session)) {
+                $this->sessions_model->delete($id);
+                $this->ezcbt->success('Sesi berhasil dihapus!');
+            } else {
+                $this->ezcbt->error('Sesi tidak terdaftar');
+            }
+        }
+
+        $param = isset($_GET['param']) ? '?'.$_GET['param'] : '';
+
+        redirect(site_url('admin/session_manage').$param);
     }
 
     /*=======================================================================*/

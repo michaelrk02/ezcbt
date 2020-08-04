@@ -44,7 +44,7 @@
             <h5 class="empty-title">Jumlah sesi selesai: <?php echo $num_results; ?></h5>
             <p class="empty-subtitle">Sebanyak <?php echo $num_results; ?> peserta telah menyelesaikan sesinya</p>
             <div class="empty-action">
-                <a class="btn btn-primary" href="<?php echo site_url('view_results'); ?>">Cek hasil</a>
+                <a class="btn btn-primary" href="<?php echo site_url('session_manage').'?state=finished'; ?>">Cek hasil</a>
             </div>
         </div>
     </div>

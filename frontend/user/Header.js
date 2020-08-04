@@ -28,6 +28,7 @@ export default class Header extends Component {
                 } else if (res.code == 401) {
                     this.setState({update: false, courseTitle: null, userName: null});
                 } else {
+                    this.setState({update: false, courseTitle: '(Sesi tidak valid. Mohon untuk segera logout jika anda sudah login)', userName: '(unknown)'});
                     window.alert('Gagal mendapatkan header info: ' + res.status + '. Mohon coba lagi');
                 }
             }).bind(this));
@@ -63,6 +64,7 @@ export default class Header extends Component {
     onLogout() {
         if (window.confirm('Apakah anda yakin ingin keluar? (anda akan kehilangan waktu jika anda masih mengerjakan tes ini)')) {
             this.setState({update: true});
+            deleteCookie('course_signature');
             deleteCookie('_$auth_token');
             this.props.history.replace('/');
         }

@@ -29,6 +29,7 @@ class Users_model extends CI_Model {
             return $this->db->get()->row_array(0);
         }
 
+        $this->db->order_by('name');
         $data = $this->db->get()->result_array();
         if (!isset($data)) {
             $data = [];
