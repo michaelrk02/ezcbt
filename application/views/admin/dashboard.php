@@ -8,7 +8,7 @@
             <h5 class="empty-title">Jumlah materi tes: <?php echo $num_courses; ?></h5>
             <p class="empty-subtitle">Sebanyak <?php echo $num_courses; ?> materi tes telah terdaftar oleh sistem (<?php echo $num_courses_locked; ?> di antaranya terkunci)</p>
             <div class="empty-action">
-                <a class="btn btn-primary" href="<?php echo site_url('course_manage'); ?>">Kelola</a>
+                <a class="btn btn-primary" href="<?php echo site_url('admin/course_manage'); ?>">Kelola</a>
             </div>
         </div>
     </div>
@@ -20,7 +20,7 @@
             <h5 class="empty-title">Jumlah peserta tes: <?php echo $num_users; ?></h5>
             <p class="empty-subtitle">Sebanyak <?php echo $num_users; ?> peserta telah terdaftar oleh sistem</p>
             <div class="empty-action">
-                <a class="btn btn-primary" href="<?php echo site_url('user_manage'); ?>">Kelola</a>
+                <a class="btn btn-primary" href="<?php echo site_url('admin/user_manage'); ?>">Kelola</a>
             </div>
         </div>
     </div>
@@ -32,7 +32,7 @@
             <h5 class="empty-title">Jumlah sesi tes: <?php echo $num_sessions; ?></h5>
             <p class="empty-subtitle">Sebanyak <?php echo $num_sessions; ?> sesi tes telah terdaftar oleh sistem</p>
             <div class="empty-action">
-                <a class="btn btn-primary" href="<?php echo site_url('session_manage'); ?>">Kelola</a>
+                <a class="btn btn-primary" href="<?php echo site_url('admin/session_manage'); ?>">Kelola</a>
             </div>
         </div>
     </div>
@@ -44,7 +44,7 @@
             <h5 class="empty-title">Jumlah sesi selesai: <?php echo $num_results; ?></h5>
             <p class="empty-subtitle">Sebanyak <?php echo $num_results; ?> peserta telah menyelesaikan sesinya</p>
             <div class="empty-action">
-                <a class="btn btn-primary" href="<?php echo site_url('session_manage').'?state=finished'; ?>">Cek hasil</a>
+                <a class="btn btn-primary" href="<?php echo site_url('admin/session_manage').'?state=finished'; ?>">Cek hasil</a>
             </div>
         </div>
     </div>
