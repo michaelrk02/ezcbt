@@ -65,7 +65,7 @@ class Courses_model extends CI_Model {
     }
 
     public function update_signature($id) {
-        $course = $this->get($id, TRUE, 'duration,num_questions,num_choices,allow_empty');
+        $course = $this->get($id, TRUE, 'title,description,duration,num_questions,num_choices,allow_empty,score_correct,score_empty,score_wrong');
         $pdf_hash = md5_file(APPPATH.'third_party/ezcbt/course/'.$id.'.pdf');
         $pdf_hash = empty($pdf_hash) ? '' : $pdf_hash;
 
