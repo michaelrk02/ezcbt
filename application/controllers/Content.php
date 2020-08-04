@@ -42,7 +42,7 @@ class Content extends CI_Controller {
             if (hash_hmac('sha256', $payload, SERVER_SECRET) === $signature) {
                 $payload = json_decode(base64_decode($payload), TRUE);
                 if (!empty($payload['course_id']) && !empty($payload['__t'])) {
-                    if (time() <= $payload['__t'] + 5) {
+                    if (time() <= $payload['__t'] + 10) {
                         $path = APPPATH.'third_party/ezcbt/course/'.$payload['course_id'].'.pdf';
                         if (file_exists($path)) {
                             $this->output->set_status_header(200);

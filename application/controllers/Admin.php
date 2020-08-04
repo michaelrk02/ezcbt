@@ -294,6 +294,7 @@ class Admin extends CI_Controller {
             } else {
                 $this->load->model('courses_model');
 
+                chmod($this->upload->data('full_path'), 0666);
                 $this->courses_model->update_signature($id);
             }
         }
