@@ -16,6 +16,7 @@ class Sessions_model extends CI_Model {
         $data['start_time'] = 0;
         $data['state'] = 'not started';
         $data['score'] = 0;
+        $data['details'] = '';
 
         $data['session_id'] = '';
         do {

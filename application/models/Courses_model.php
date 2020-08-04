@@ -9,6 +9,8 @@ class Courses_model extends CI_Model {
     public function create($data) {
         $this->load->helper('string');
 
+        $data['signature'] = '';
+
         $data['course_id'] = '';
         do {
             $data['course_id'] = random_string('alnum', 8);
