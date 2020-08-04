@@ -6,3 +6,5 @@ frontend/node_modules/
 presets/production/
 public/*.app.js
 
+*.tar.gz
+
