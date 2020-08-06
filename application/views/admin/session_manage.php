@@ -65,6 +65,7 @@
                 <legend>TINDAKAN</legend>
                 <div class="columns">
                     <div class="column col-auto px-1"><a class="btn btn-primary" href="<?php echo site_url('admin/session_create').'?param='.urlencode($param); ?>">Tambah sesi <i class="icon icon-plus ml-1"></i></a></div>
+                    <div class="column col-auto px-1"><a class="btn btn-primary" href="<?php echo site_url('admin/session_sync').'?param='.urlencode($param); ?>">Sinkronkan <i class="icon icon-refresh ml-1"></i></a></div>
                 </div>
             </fieldset>
         </div>

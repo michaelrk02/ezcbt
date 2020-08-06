@@ -67,6 +67,8 @@ class Sessions_model extends CI_Model {
                 }
                 $this->db->where('session_id', $session_id);
                 $this->db->update('sessions', $data);
+
+                $this->calculate_score($session_id);
             }
         }
     }

@@ -481,6 +481,12 @@ class Admin extends CI_Controller {
         $data['param'][] = 'course_id='.urlencode($data['course_id']);
         $data['param'][] = 'user_id='.urlencode($data['user_id']);
         $data['param'][] = 'state='.urlencode($data['state']);
+        if (isset($_GET['page'])) {
+            $data['param'][] = 'page='.urlencode($_GET['page']);
+        }
+        if (isset($_GET['items'])) {
+            $data['param'][] = 'items='.urlencode($_GET['items']);
+        }
         $data['param'] = implode('&', $data['param']);
 
         $data['status'] = $this->ezcbt->status();
@@ -488,6 +494,20 @@ class Admin extends CI_Controller {
         $this->render_header('Kelola Sesi');
         $this->load->view('admin/session_manage', $data);
         $this->render_footer();
+    }
+
+    public function session_sync() {
+        $this->load->model('sessions_model');
+
+        $sessions = $this->sessions_model->get(NULL, 'session_id');
+        foreach ($sessions as $session) {
+            $this->sessions_model->update_state($session['session_id']);
+        }
+
+        $this->ezcbt->success('Semua sesi berhasil disinkronkan');
+
+        $param = isset($_GET['param']) ? '?'.$_GET['param'] : '';
+        redirect(site_url('admin/session_manage').$param);
     }
 
     public function session_create() {
