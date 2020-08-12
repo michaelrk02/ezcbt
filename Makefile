@@ -39,7 +39,7 @@ production:
 
 archive: production build
 	@ echo 'Preparing archive for distribution ...'
-	@ tar -czf $(PKGNAME).tar.gz application public system index.php
+	@ tar -czf $(PKGNAME).tar.gz application public system index.php ezcbt.sql
 	@ echo 'Done.'
 
 .PHONY : archive
