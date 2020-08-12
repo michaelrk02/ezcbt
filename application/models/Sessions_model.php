@@ -60,15 +60,19 @@ class Sessions_model extends CI_Model {
         if (isset($data)) {
             $course = $this->courses_model->get($data['course_id'], TRUE, 'duration');
             if (isset($course)) {
+                $update = FALSE;
                 if ($data['state'] === 'started') {
                     if (time() > $data['start_time'] + $course['duration']) {
                         $data['state'] = 'finished';
+                        $update = TRUE;
                     }
                 }
                 $this->db->where('session_id', $session_id);
                 $this->db->update('sessions', $data);
 
-                $this->calculate_score($session_id);
+                if ($update) {
+                    $this->calculate_score($session_id);
+                }
             }
         }
     }
