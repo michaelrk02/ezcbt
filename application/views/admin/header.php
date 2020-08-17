@@ -1,8 +1,8 @@
 <html>
     <head>
         <title>ezCBT Admin<?php echo !empty($title) ? ' - '.$title : ''; ?></title>
-        <script src="<?php echo site_url('content').'?type=text%2Fjavascript&path=public%2Fjquery.min.js&cache=86400'; ?>"></script>
-        <script src="<?php echo site_url('content').'?type=text%2Fjavascript&path=public%2Fstyles.app.js&cache=86400'; ?>"></script>
+        <script src="<?php echo site_url('content').'?type=text%2Fjavascript&name=jquery.min.js&cache=86400'; ?>"></script>
+        <script src="<?php echo site_url('content').'?type=text%2Fjavascript&name=styles.app.js&cache=86400'; ?>"></script>
         <meta name="viewport" content="width=device-width,initial-scale=1">
     </head>
     <body>

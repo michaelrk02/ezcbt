@@ -8,11 +8,11 @@ class Content extends CI_Controller {
 
     public function index() {
         $type = $this->input->get('type');
-        $path = $this->input->get('path');
+        $name = $this->input->get('name');
         $cache = $this->input->get('cache');
 
-        if (!empty($path)) {
-            $path = FCPATH.$path;
+        if (!empty($name)) {
+            $path = FCPATH.'public/'.basename($name);
             if (file_exists($path)) {
                 $this->output->set_status_header(200);
                 if (empty($type)) {
